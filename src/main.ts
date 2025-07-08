@@ -26,6 +26,9 @@ async function bootstrap() {
   // Allow all origins
   app.enableCors();
 
+  // All endpoint /api
+  app.setGlobalPrefix('api');
+
   // Define the Swagger options and document
   const options = new DocumentBuilder()
     .setTitle('NestJS Starter API')

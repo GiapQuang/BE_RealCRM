@@ -10,7 +10,6 @@ import { LoginReqDto, LoginResDto, SignupReqDto, SignupResDto } from './dtos';
 // Other modules dependencies
 import { User } from '../user/user.schema';
 import { UserQueryService } from '../user/user.query.service';
-import { WorkspaceQueryService } from '../workspace/workspace.query-service';
 
 // Shared dependencies
 import { BadRequestException } from '../../exceptions/bad-request.exception';
@@ -22,22 +21,16 @@ export class AuthService {
 
   constructor(
     private readonly userQueryService: UserQueryService,
-    private readonly workspaceQueryService: WorkspaceQueryService,
     private readonly jwtService: JwtService,
   ) {}
 
   async signup(signupReqDto: SignupReqDto): Promise<SignupResDto> {
-    const { email, password, workspaceName, name } = signupReqDto;
+    const { email, password, name } = signupReqDto;
 
     const user = await this.userQueryService.findByEmail(email);
     if (user) {
       throw BadRequestException.RESOURCE_ALREADY_EXISTS(`User with email ${email} already exists`);
     }
-
-    const workspacePayload = {
-      name: workspaceName,
-    };
-    const workspace = await this.workspaceQueryService.create(workspacePayload);
 
     // Hash password
     const saltOrRounds = this.SALT_ROUNDS;
@@ -46,12 +39,7 @@ export class AuthService {
     const userPayload: User = {
       email,
       password: hashedPassword,
-      workspace: workspace._id,
       name,
-      verified: true,
-      registerCode: this.generateCode(),
-      verificationCode: null,
-      verificationCodeExpiry: null,
       resetToken: null,
     };
 
@@ -88,7 +76,6 @@ export class AuthService {
     const payload: JwtUserPayload = {
       user: user._id,
       email: user.email,
-      code: user.registerCode,
     };
     const accessToken = await this.jwtService.signAsync(payload);
 
